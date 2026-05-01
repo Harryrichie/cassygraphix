@@ -21,11 +21,16 @@ function Footer() {
             </div>
             <p><i className="fa-regular fa-copyright"></i> {new Date().getFullYear()} Cassy Graphix. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="https://x.com/Cassy_6255?t=xj6k5q8sMtzJ71KF2LognA&s=09" 
-              target="_blank" rel="noopener noreferrer"className="hover:text-white transition-colors">Twitter</a>
-              <a href="https://www.instagram.com/cassy_graphix?igsh=MXdyNzZnb2doa3c4dg==" 
-              target="_blank" rel="noopener noreferrer"className="hover:text-white transition-colors">Instagram</a>
-              <a href="#Linkedin" className="hover:text-white transition-colors">LinkedIn</a>
+              <a href="https://x.com/Cassy_6255?t=xj6k5q8sMtzJ71KF2LognA&s=09" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-xl" title="Twitter">
+                <i className="fa-brands fa-x-twitter"></i>
+              </a>
+              <a href="https://www.instagram.com/cassy_graphix?igsh=MXdyNzZnb2doa3c4dg==" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-xl" title="Instagram">
+                <i className="fa-brands fa-instagram"></i>
+              </a>
+              <a href="https://www.linkedin.com/in/tochukwu-ibekwe-5ba379401?utm_source=share_via&utm_content=profile&utm_medium=member_android" 
+                target='_blank' rel="noopener noreferrer" className="hover:text-white transition-colors text-xl" title="LinkedIn">
+                <i className="fa-brands fa-linkedin"></i>
+              </a>
             </div>
           </div>
         </div>

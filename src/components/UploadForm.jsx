@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../config/supabaseConfig'
 import { Toaster, toast } from 'sonner'
+import imageCompression from 'browser-image-compression'
 
 function UploadForm() {
   const [description, setDescription] = useState('')
@@ -13,15 +14,20 @@ function UploadForm() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
-  const categories = ['Branding', 'UI/UX', 'Marketing', 'Packaging', 'Print'];
+  const categories = ['Branding', 'Poster', 'Flyer', 'UI/UX',];
   const BUCKET_NAME = 'portfolio_image';
+  const RECENT_DURATION_MS = 3600000; // 1 hour in milliseconds
 
   useEffect(() => {
     const fetchProjects = async () => {
+      // Get ISO timestamp for 1 hour ago
+      const oneHourAgo = new Date(Date.now() - RECENT_DURATION_MS).toISOString();
+      
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false })
+        .gt('created_at', oneHourAgo); // Only fetch projects newer than 1 hour
 
       if (error) {
         console.error('Error fetching projects:', error)
@@ -30,13 +36,49 @@ function UploadForm() {
       }
     }
     fetchProjects()
+
+    // Cleanup timer: check every minute to remove projects that have become > 1hr old
+    const interval = setInterval(() => {
+      setProjects(prev => prev.filter(p => {
+        const projectTime = new Date(p.created_at).getTime();
+        return (Date.now() - projectTime) < RECENT_DURATION_MS;
+      }));
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [])
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0]
-      setFile(selectedFile)
-      setPreview(URL.createObjectURL(selectedFile))
+      const originalFile = e.target.files[0]
+      
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: 'image/webp'
+      }
+
+      const compressionToast = toast.loading('Optimizing image...')
+      try {
+        const compressedBlob = await imageCompression(originalFile, options)
+        
+        // Convert blob to file with webp extension
+        const fileName = originalFile.name.replace(/\.[^/.]+$/, "") + ".webp"
+        const compressedFile = new File([compressedBlob], fileName, { type: 'image/webp' })
+
+        // Clean up the previous object URL to prevent memory leaks
+        if (preview) {
+          URL.revokeObjectURL(preview)
+        }
+
+        setFile(compressedFile)
+        setPreview(URL.createObjectURL(compressedFile))
+        toast.success('Image optimized successfully', { id: compressionToast })
+      } catch (error) {
+        console.error('Compression error:', error)
+        toast.error('Failed to process image', { id: compressionToast })
+      }
     }
   }
 
@@ -89,6 +131,11 @@ function UploadForm() {
       setDescription('')
       setCategory('Branding')
       setFile(null)
+      
+      // Clean up object URL after successful upload
+      if (preview) {
+        URL.revokeObjectURL(preview)
+      }
       setPreview(null)
     } catch (error) {
       toast.error(error.message)
@@ -172,18 +219,18 @@ function UploadForm() {
   }
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
       <Toaster position="top-center" richColors />
-      <h2 className="text-xl font-bold text-slate-900 mb-5">Upload New Project</h2>
+      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-5">Upload New Project</h2>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">
+          <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Description
           </label>
           <textarea
             id="description"
             rows={4}
-            className="w-full rounded-lg border-slate-200 border p-3 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all resize-none"
+            className="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white border p-3 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all resize-none"
             placeholder="Enter project description..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -192,14 +239,14 @@ function UploadForm() {
         </div>
 
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-1">
+          <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Category
           </label>
           <select
             id="category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border-slate-200 border p-3 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all bg-white cursor-pointer"
+            className="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white border p-3 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all bg-white cursor-pointer"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
@@ -208,16 +255,19 @@ function UploadForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Project Image
           </label>
           {preview && (
-            <div className="mb-4 relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+            <div className="mb-4 relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
               <img src={preview} alt="Preview" className="w-full h-64 object-contain" />
               <button
                 type="button"
                 onClick={() => {
                   setFile(null)
+                  if (preview) {
+                    URL.revokeObjectURL(preview)
+                  }
                   setPreview(null)
                 }}
                 className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-sm text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
@@ -226,10 +276,10 @@ function UploadForm() {
               </button>
             </div>
           )}
-          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-lg hover:bg-slate-50 transition-colors cursor-pointer relative group">
+          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer relative group">
             <div className="space-y-1 text-center">
               <svg
-                className="mx-auto h-12 w-12 text-slate-400 group-hover:text-indigo-500 transition-colors"
+                className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 transition-colors"
                 stroke="currentColor"
                 fill="none"
                 viewBox="0 0 48 48"
@@ -242,7 +292,7 @@ function UploadForm() {
                   strokeLinejoin="round"
                 />
               </svg>
-              <div className="flex text-sm text-slate-600 justify-center">
+              <div className="flex text-sm text-slate-600 dark:text-slate-400 justify-center">
                 <label
                   htmlFor="file-upload"
                   className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
@@ -281,7 +331,7 @@ function UploadForm() {
 
       <div className="mt-10 border-t border-slate-100 pt-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-slate-900">Recent Uploads</h3>
+          <h3 className="text-lg font-bold text-slate-900">Recent Uploads (Last 1hr)</h3>
           {projects.length > 0 && (
             <div className="flex items-center gap-3">
               <button 
@@ -308,7 +358,7 @@ function UploadForm() {
             <p className="text-center text-slate-500 py-4">No projects uploaded yet.</p>
           ) : (
             projects.map((project) => (
-              <div key={project.id} className={`flex gap-4 p-4 rounded-xl border transition-all ${selectedIds.has(project.id) ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-100'}`}>
+              <div key={project.id} className={`flex gap-4 p-4 rounded-xl border transition-all ${selectedIds.has(project.id) ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700'}`}>
                 <div className="flex items-center">
                   <input 
                     type="checkbox"
@@ -317,14 +367,14 @@ function UploadForm() {
                     className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                   />
                 </div>
-                <div className="w-20 h-20 flex-shrink-0 bg-white rounded-lg overflow-hidden border border-slate-200">
+                <div className="w-20 h-20 flex-shrink-0 bg-white dark:bg-slate-800 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
                   <img src={project.image} alt="Project" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-slate-900 truncate">{project.description}</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white truncate">{project.description}</h4>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-600">{project.category}</span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
                       {new Date(project.created_at || Date.now()).toLocaleDateString()} • {new Date(project.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>

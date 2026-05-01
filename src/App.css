@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Define how the 'dark:' variant is triggered for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Set global background on the root to prevent white space gaps in dark mode */
+:root {
+  @apply bg-white dark:bg-slate-950;
+}
+
+@theme {
+  /* You can put your theme extensions here instead of a config file */
+  /* Example: --color-primary: #3b82f6; */
+}

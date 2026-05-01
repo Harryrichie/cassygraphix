@@ -5,6 +5,7 @@ import Admin from './pages/Admin'
 import './App.css'
 import AllProjects from './pages/AllProjects'
 import ProtectedRoute from './components/ProtectedRoute'
+import Gallery from './pages/Gallery'
 
 function App() {
   return (
@@ -17,6 +18,11 @@ function App() {
         <Route path="/admin" element={
           <ProtectedRoute>
             <Admin />
+          </ProtectedRoute>
+        } />
+        <Route path="/gallery-view" element={
+          <ProtectedRoute>
+            <Gallery/>
           </ProtectedRoute>
         } />
       </Routes>

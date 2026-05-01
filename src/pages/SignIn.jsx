@@ -46,26 +46,26 @@ function SignIn() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 transition-colors duration-300">
       <Toaster position="top-center" richColors />
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-slate-100">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-xl shadow-lg p-8 border border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-4 mb-8">
           <div className="bg-gray-600 p-3 rounded-xl">
             <img src={IconLogo} alt="Logo" className="w-12 h-12 object-contain" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Welcome Back</h2>
-            <p className="text-slate-500 text-sm">Sign in to manage your portfolio</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome Back</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Sign in to manage your portfolio</p>
           </div>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
             <input
               type="email"
               required
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
               placeholder="admin@cassygraphix.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -73,11 +73,11 @@ function SignIn() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
             <input
               type="password"
               required
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
